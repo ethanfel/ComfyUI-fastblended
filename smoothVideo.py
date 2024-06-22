@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import gc
 from .FastBlend.api import smooth_video
 
 class SmoothVideo:
@@ -127,7 +128,11 @@ class SmoothVideo:
 
             return (torch_images.type(torch.float32),)
         finally:
-            # Manually delete variables and clear cache to free up VRAM
+            # Move tensors to CPU before deleting
+            orginalframe = orginalframe.cpu()
+            keyframe = keyframe.cpu()
+            torch.cuda.empty_cache()  # Free up GPU memory
             del orginalframe, keyframe, orginalframe_np, keyframe_np, frames, numpy_images, normalized_images, torch_images
-            torch.cuda.empty_cache()
+            gc.collect()  # Collect garbage
+            torch.cuda.empty_cache()  # Free up GPU memory
             print('VRAM cleared')
